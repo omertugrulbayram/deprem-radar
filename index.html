@@ -404,13 +404,17 @@ async function fetchQuakes(period) {
     if (!json.status || !json.result) throw new Error('API yanıt vermedi');
 
     allQuakes = json.result.map(q=>({
-      id: q.earthquake_id,
-      lat: q.geojson.coordinates[1],
-      lon: q.geojson.coordinates[0],
-      dep: q.depth, mag: q.mag, loc: q.title,
-      time: new Date(q.date_time.replace(' ','T')+'+03:00').getTime(),
-      timeStr: q.date
-    })).sort((a,b)=>b.time-a.time);
+  id: q.earthquake_id || `${q.date_time}_${q.geojson.coordinates[0]}_${q.geojson.coordinates[1]}`,
+  lat: q.geojson.coordinates[1],
+  lon: q.geojson.coordinates[0],
+  dep: q.depth, mag: q.mag, loc: q.title,
+  time: new Date(q.date_time.replace(' ','T')+'+03:00').getTime(),
+  timeStr: q.date
+}))
+.filter((q, index, self) => 
+  index === self.findIndex(t => t.id === q.id)  // deduplicate
+)
+.sort((a,b)=>b.time-a.time);
 
     renderAll();
     const t=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
