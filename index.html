@@ -272,8 +272,12 @@ header {
   position:fixed; inset:0; z-index:2900;
   background:rgba(0,0,0,0.5);
   opacity:0; transition:opacity 0.3s;
+  pointer-events:none; /* ← BUNU EKLE */
 }
-.mob-overlay.visible { opacity:1; }
+.mob-overlay.visible { 
+  opacity:1; 
+  pointer-events:all; /* ← BUNU EKLE */
+}
 
 /* Mobil detay sheet (depreme tıklanınca) */
 .mob-detail-sheet {
@@ -284,8 +288,13 @@ header {
   transform:translateY(20px); opacity:0;
   transition:transform 0.25s ease, opacity 0.25s ease;
   box-shadow:0 -4px 30px rgba(0,0,0,0.5);
+  pointer-events:none; /* ← BUNU EKLE */
 }
-.mob-detail-sheet.open { transform:translateY(0); opacity:1; }
+.mob-detail-sheet.open {
+  transform:translateY(0); 
+  opacity:1; 
+  pointer-events:all; /* ← BUNU EKLE */
+}
 .mob-detail-sheet-close {
   position:absolute; top:10px; right:10px; font-size:16px; cursor:pointer; color:var(--muted);
 }
