@@ -328,6 +328,13 @@ header {
 @media(max-width:400px) {
   .hstat:nth-child(4) { display:none; } /* güncelleme saatini gizle dar ekranda */
 }
+@keyframes faultPulse {
+0%, 100% { opacity: 0.85; }
+50% { opacity: 0.35; }
+}
+.fault-high {
+  animation: faultPulse 2.5s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
@@ -559,16 +566,45 @@ function faultColor(risk) {
   return '#ffcc00';
 }
 function drawFaults() {
-  faultLayers.forEach(l => map.removeLayer(l)); faultLayers=[];
+  faultLayers.forEach(l => map.removeLayer(l));
+  faultLayers = [];
   if (!showFaults) return;
   FAULTS.forEach(f => {
-    const col=faultColor(f.risk), isHigh=f.risk==='Çok Yüksek';
-    const pl=L.polyline(f.coords.map(c=>[c[0],c[1]]),{
-      color:col, weight:isHigh?2.5:2, opacity:isHigh?0.8:0.6,
-      dashArray:isHigh?null:(f.risk==='Yüksek'?null:'7,5')
+    const col = faultColor(f.risk);
+    const isVeryHigh = f.risk === 'Çok Yüksek';
+    const isHigh = f.risk === 'Yüksek';
+
+    // Glow efekti için altta kalın şeffaf çizgi
+    if (isVeryHigh || isHigh) {
+      const glow = L.polyline(f.coords.map(c => [c[0], c[1]]), {
+        color: col, weight: isVeryHigh ? 14 : 9,
+        opacity: 0.08, lineCap: 'round', lineJoin: 'round'
+      }).addTo(map);
+      faultLayers.push(glow);
+
+      const glow2 = L.polyline(f.coords.map(c => [c[0], c[1]]), {
+        color: col, weight: isVeryHigh ? 7 : 5,
+        opacity: 0.15, lineCap: 'round', lineJoin: 'round'
+      }).addTo(map);
+      faultLayers.push(glow2);
+    }
+
+    // Ana çizgi
+    const pl = L.polyline(f.coords.map(c => [c[0], c[1]]), {
+      color: col,
+      weight: isVeryHigh ? 3.5 : isHigh ? 2.5 : 1.8,
+      opacity: isVeryHigh ? 0.95 : isHigh ? 0.8 : 0.6,
+      dashArray: isVeryHigh ? null : isHigh ? null : '6,5',
+      lineCap: 'round', lineJoin: 'round',
+      className: isVeryHigh ? 'fault-high' : ''
     });
-    pl.bindTooltip(`<b style="color:${col}">${f.name}</b><br><span style="color:#aaa;font-size:10px">Risk: ${f.risk}</span>`,{sticky:true,opacity:0.95});
-    pl.addTo(map); faultLayers.push(pl);
+    pl.bindTooltip(
+      `<b style="color:${col}">${f.name}</b><br>
+       <span style="color:#aaa;font-size:10px">Risk: ${f.risk}</span>`,
+      { sticky: true, opacity: 0.95 }
+    );
+    pl.addTo(map);
+    faultLayers.push(pl);
   });
 }
 function toggleFaults() {
