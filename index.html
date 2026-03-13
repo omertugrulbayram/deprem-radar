@@ -336,7 +336,7 @@ function initApp() {
 
   drawFaults();
   fetchQuakes('day');
-  setInterval(() => fetchQuakes(currentPeriod), 5*60*1000);
+  setInterval(() => fetchQuakes(currentPeriod), 30*1000);
 
   setTimeout(() => {
     const l = document.getElementById('loader');
@@ -392,7 +392,7 @@ async function fetchQuakes(period) {
   try {
     let url;
     if (period==='day') {
-      url = 'https://api.orhanaydogdu.com.tr/deprem/kandilli/live?limit=500';
+      url = 'url = `https://api.orhanaydogdu.com.tr/deprem/kandilli/live?limit=500&_=${Date.now()}`;';
     } else {
       const now=new Date(), days=period==='week'?7:30;
       const from=new Date(now-days*86400000);
