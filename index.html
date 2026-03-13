@@ -336,7 +336,7 @@ function initApp() {
 
   drawFaults();
   fetchQuakes('day');
-  setInterval(() => fetchQuakes(currentPeriod), 30*1000);
+  setInterval(() => fetchQuakes(currentPeriod), 30 * 1000);
 
   setTimeout(() => {
     const l = document.getElementById('loader');
@@ -385,32 +385,41 @@ function toggleFaults() {
 }
 
 // ================================================================
-// FETCH QUAKES
+// FETCH QUAKES — DÜZELTİLMİŞ
 // ================================================================
 async function fetchQuakes(period) {
   document.getElementById('statusBar').textContent = 'VERİ YÜKLENIYOR...';
   try {
     let url;
-    if (period==='day') {
-      url = 'url = `https://api.orhanaydogdu.com.tr/deprem/kandilli/live?limit=500&_=${Date.now()}`;';
+    if (period === 'day') {
+      // Cache'i önlemek için timestamp parametresi eklendi
+      url = 'https://api.orhanaydogdu.com.tr/deprem/kandilli/live?limit=500&_=' + Date.now();
     } else {
-      const now=new Date(), days=period==='week'?7:30;
-      const from=new Date(now-days*86400000);
-      const pad=n=>String(n).padStart(2,'0');
-      url = `https://api.orhanaydogdu.com.tr/deprem/kandilli/archive?date=${from.getFullYear()}-${pad(from.getMonth()+1)}-${pad(from.getDate())}&limit=500`;
+      const now = new Date(), days = period === 'week' ? 7 : 30;
+      const from = new Date(now - days * 86400000);
+      const pad = n => String(n).padStart(2, '0');
+      url = 'https://api.orhanaydogdu.com.tr/deprem/kandilli/archive?date='
+        + from.getFullYear() + '-' + pad(from.getMonth() + 1) + '-' + pad(from.getDate())
+        + '&limit=500&_=' + Date.now();
     }
+
     const res = await fetch(url);
     const json = await res.json();
     if (!json.status || !json.result) throw new Error('API yanıt vermedi');
 
-    allQuakes = json.result.map(q=>({
+    const prevSelected = selectedId;
+
+    allQuakes = json.result.map(q => ({
       id: q.earthquake_id,
       lat: q.geojson.coordinates[1],
       lon: q.geojson.coordinates[0],
-      dep: q.depth, mag: q.mag, loc: q.title,
-      time: new Date(q.date_time.replace(' ','T')+'+03:00').getTime(),
+      dep: q.depth,
+      mag: q.mag,
+      loc: q.title,
+      time: new Date(q.date_time.replace(' ', 'T') + '+03:00').getTime(),
       timeStr: q.date
     }))
+    // Duplicate temizleme: aynı koordinat + mag + derinlik kombinasyonu
     .filter((q, index, self) =>
       index === self.findIndex(t =>
         t.lat === q.lat &&
@@ -419,15 +428,23 @@ async function fetchQuakes(period) {
         t.dep === q.dep
       )
     )
-    .sort((a,b)=>b.time-a.time);
+    .sort((a, b) => b.time - a.time);
 
     renderAll();
-    const t=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('statusBar').innerHTML=`SON GÜNCELLEME: <span>${t}</span> | KANDİLLİ`;
-  } catch(e) {
-    document.getElementById('statusBar').innerHTML=`<span style="color:var(--accent)">HATA: ${e.message}</span>`;
+
+    // Seçili depremi koru
+    selectedId = prevSelected;
+    document.querySelectorAll('.qi').forEach(el =>
+      el.classList.toggle('sel', el.dataset.id === selectedId)
+    );
+
+    const t = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('statusBar').innerHTML = `SON GÜNCELLEME: <span>${t}</span> | KANDİLLİ`;
+  } catch (e) {
+    document.getElementById('statusBar').innerHTML = `<span style="color:var(--accent)">HATA: ${e.message}</span>`;
   }
 }
+
 // ================================================================
 // RENDER
 // ================================================================
@@ -512,20 +529,15 @@ function calcRisk(lat,lon) {
   const closest=dists[0];
   const d=closest.dist;
 
-  // Son 30 gündeki yakın depremler (100km)
   const nearby30=allQuakes.filter(q=>haversine(lat,lon,q.lat,q.lon)<100&&q.mag>=2.5).length;
   const nearby50=allQuakes.filter(q=>haversine(lat,lon,q.lat,q.lon)<50&&q.mag>=3.0).length;
 
-  // Skor hesaplama
   let score=0;
-  // Fay mesafesi (max 45 puan)
   if(d<5) score+=45; else if(d<15) score+=38; else if(d<30) score+=28;
   else if(d<60) score+=18; else if(d<100) score+=10; else score+=3;
-  // Fay tipi (max 35 puan)
   if(closest.risk==='Çok Yüksek') score+=35;
   else if(closest.risk==='Yüksek') score+=22;
   else if(closest.risk==='Orta-Yüksek') score+=14; else score+=7;
-  // Yakın deprem aktivitesi (max 20 puan)
   score+=Math.min(20, nearby30*1.5+nearby50*2);
   score=Math.min(99,Math.round(score));
 
