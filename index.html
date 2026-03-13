@@ -525,6 +525,7 @@ const isMobile = () => window.innerWidth <= 768;
 let map;
 function initApp() {
   map = L.map('map', { center:[39.0,35.5], zoom:6, zoomControl:false, attributionControl:false });
+  tap:false,        // ← BUNU EKLE
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:18 }).addTo(map);
   L.control.zoom({ position:'topleft' }).addTo(map);
   map.fitBounds([[35.8,25.7],[42.1,44.8]]);
