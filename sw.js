@@ -3,9 +3,10 @@ self.addEventListener('push', function(event) {
     event.waitUntil(
         self.registration.showNotification(data.title || '🔴 Deprem!', {
             body: data.message || '',
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
-            vibrate: [200, 100, 200]
+            icon: 'https://depremradar.net/favicon.ico',
+            badge: 'https://depremradar.net/favicon.ico',
+            vibrate: [200, 100, 200],
+            data: { url: 'https://depremradar.net' }
         })
     );
 });
