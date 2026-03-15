@@ -21,23 +21,37 @@ async function registerPush() {
     }
 }
 
+const VAPID_PUBLIC = 'BI1T4po1m3XyY61gbbSs_MIjkyIGqG1Wh2O0XG7h1teUU0TqWk7VtVsxfpP0PVZYi64PvKFg7w0HxWScDsOgWJc';
+const NTFY_URL = 'https://push.depremradar.net';
+
 async function toggleNotification() {
     const btn = document.getElementById('notifBtn');
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted') {
-        await registerPush();
+    try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') return;
+        
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        
+        const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: VAPID_PUBLIC
+        });
+        
+        // ntfy'ye subscription gönder
+        await fetch(`${NTFY_URL}/depremradar/subscription`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub)
+        });
+        
         btn.textContent = '🔔 Bildirim Açık';
         btn.style.color = 'var(--green)';
-        localStorage.setItem('notif', '1');
-        // ntfy SSE bağlantısı
-        const es = new EventSource(`${NTFY_URL}/sse`);
-        es.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            if (data.event === 'message') {
-                new Notification(data.title || '🔴 Deprem!', { body: data.message });
-            }
-        };
+        btn.style.borderColor = 'var(--green)';
+    } catch(e) {
+        console.error('Push hatası:', e);
     }
+}
 }
 </script>
 <meta name="description" content="Türkiye canlı deprem haritası. Kandilli verisiyle anlık deprem takibi, fay hatları ve risk analizi.">
