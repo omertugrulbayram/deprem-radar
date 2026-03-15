@@ -27,13 +27,16 @@ async function toggleNotification() {
         const reg = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
         
+        // Önce eski subscription'ı iptal et
+        const oldSub = await reg.pushManager.getSubscription();
+        if (oldSub) await oldSub.unsubscribe();
+        
         const sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: VAPID_PUBLIC
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
         });
         
-        // ntfy'ye subscription gönder
-        await fetch(`${NTFY_URL}/depremradar/subscription`, {
+        await fetch('https://push.depremradar.net/depremradar/subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(sub)
@@ -42,9 +45,19 @@ async function toggleNotification() {
         btn.textContent = '🔔 Bildirim Açık';
         btn.style.color = 'var(--green)';
         btn.style.borderColor = 'var(--green)';
+        console.log('Push subscription başarılı!');
     } catch(e) {
         console.error('Push hatası:', e);
     }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
 }
 </script>
 <meta name="description" content="Türkiye canlı deprem haritası. Kandilli verisiyle anlık deprem takibi, fay hatları ve risk analizi.">
