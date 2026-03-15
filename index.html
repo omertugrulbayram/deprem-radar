@@ -14,8 +14,6 @@
 </script>
   <script>
 const NTFY_URL = 'https://push.depremradar.net/depremradar';
-const NTFY_USER = 'subscriber';
-const NTFY_PASS = 'SUBSCRIBER_SIFREN';
 
 async function registerPush() {
     if ('serviceWorker' in navigator) {
@@ -32,9 +30,7 @@ async function toggleNotification() {
         btn.style.color = 'var(--green)';
         localStorage.setItem('notif', '1');
         // ntfy SSE bağlantısı
-        const es = new EventSource(`${NTFY_URL}/sse`, {
-            headers: { Authorization: 'Basic ' + btoa(NTFY_USER + ':' + NTFY_PASS) }
-        });
+        const es = new EventSource(`${NTFY_URL}/sse`);
         es.onmessage = function(e) {
             const data = JSON.parse(e.data);
             if (data.event === 'message') {
@@ -411,6 +407,7 @@ header {
   </div>
   <div class="toolbar-right">
     <button class="layer-btn fault-on" id="faultBtn" onclick="toggleFaults()">🔶 FAY</button>
+    <button class="layer-btn" id="notifBtn" onclick="toggleNotification()">🔔 BİLDİRİM AL</button>
   </div>
 </div>
 
