@@ -13,13 +13,7 @@
   gtag('config', 'G-XZ23KEBWVR');
 </script>
   <script>
-const NTFY_URL = 'https://push.depremradar.net/depremradar';
 
-async function registerPush() {
-    if ('serviceWorker' in navigator) {
-        await navigator.serviceWorker.register('/sw.js');
-    }
-}
 
 const VAPID_PUBLIC = 'BI1T4po1m3XyY61gbbSs_MIjkyIGqG1Wh2O0XG7h1teUU0TqWk7VtVsxfpP0PVZYi64PvKFg7w0HxWScDsOgWJc';
 const NTFY_URL = 'https://push.depremradar.net';
@@ -51,7 +45,6 @@ async function toggleNotification() {
     } catch(e) {
         console.error('Push hatası:', e);
     }
-}
 }
 </script>
 <meta name="description" content="Türkiye canlı deprem haritası. Kandilli verisiyle anlık deprem takibi, fay hatları ve risk analizi.">
