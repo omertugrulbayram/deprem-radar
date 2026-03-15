@@ -12,6 +12,38 @@
   gtag('js', new Date());
   gtag('config', 'G-XZ23KEBWVR');
 </script>
+  <script>
+const NTFY_URL = 'https://push.depremradar.net/depremradar';
+const NTFY_USER = 'subscriber';
+const NTFY_PASS = 'SUBSCRIBER_SIFREN';
+
+async function registerPush() {
+    if ('serviceWorker' in navigator) {
+        await navigator.serviceWorker.register('/sw.js');
+    }
+}
+
+async function toggleNotification() {
+    const btn = document.getElementById('notifBtn');
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+        await registerPush();
+        btn.textContent = '🔔 Bildirim Açık';
+        btn.style.color = 'var(--green)';
+        localStorage.setItem('notif', '1');
+        // ntfy SSE bağlantısı
+        const es = new EventSource(`${NTFY_URL}/sse`, {
+            headers: { Authorization: 'Basic ' + btoa(NTFY_USER + ':' + NTFY_PASS) }
+        });
+        es.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.event === 'message') {
+                new Notification(data.title || '🔴 Deprem!', { body: data.message });
+            }
+        };
+    }
+}
+</script>
 <meta name="description" content="Türkiye canlı deprem haritası. Kandilli verisiyle anlık deprem takibi, fay hatları ve risk analizi.">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
